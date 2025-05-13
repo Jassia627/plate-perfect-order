@@ -1,0 +1,76 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 33% 95%;
+    --foreground: 236 10% 30%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 236 10% 30%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 236 10% 30%;
+
+    --primary: 14 69% 63%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 25% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 35 36% 95%;
+    --muted-foreground: 236 5% 50%;
+
+    --accent: 39 79% 75%;
+    --accent-foreground: 236 10% 30%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 39 33% 90%;
+    --input: 39 33% 90%;
+    --ring: 14 69% 63%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-roboto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-medium;
+  }
+}
+
+@layer components {
+  .restaurant-card {
+    @apply bg-white rounded-lg shadow-md p-4 transition-all duration-200 hover:shadow-lg;
+  }
+  .btn-primary {
+    @apply bg-restaurant-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all;
+  }
+  .btn-secondary {
+    @apply bg-restaurant-secondary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all;
+  }
+  .status-pill {
+    @apply px-3 py-1 rounded-full text-xs font-medium;
+  }
+  .table-available {
+    @apply bg-restaurant-secondary bg-opacity-20 text-restaurant-secondary border border-restaurant-secondary;
+  }
+  .table-occupied {
+    @apply bg-restaurant-primary bg-opacity-20 text-restaurant-primary border border-restaurant-primary;
+  }
+  .table-reserved {
+    @apply bg-restaurant-accent bg-opacity-20 text-restaurant-accent border border-restaurant-accent;
+  }
+}

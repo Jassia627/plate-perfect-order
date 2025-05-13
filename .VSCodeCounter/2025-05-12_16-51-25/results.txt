@@ -1,0 +1,185 @@
+Date : 2025-05-12 16:51:25
+Directory : d:\proyectos\proyectos\plate-perfect-order\src
+Total : 132 files,  17932 codes, 874 comments, 2223 blanks, all 21029 lines
+
+Languages
++----------------+------------+------------+------------+------------+------------+
+| language       | files      | code       | comment    | blank      | total      |
++----------------+------------+------------+------------+------------+------------+
+| TypeScript JSX |        117 |     16,842 |        751 |      2,001 |     19,594 |
+| TypeScript     |         12 |        988 |        123 |        201 |      1,312 |
+| CSS            |          2 |         99 |          0 |         21 |        120 |
+| Markdown       |          1 |          3 |          0 |          0 |          3 |
++----------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                             | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                |        132 |     17,932 |        874 |      2,223 |     21,029 |
+| . (Files)                                                                                        |          6 |        217 |          5 |         32 |        254 |
+| components                                                                                       |         88 |      8,533 |        213 |      1,011 |      9,757 |
+| components (Files)                                                                               |          1 |        259 |         15 |         31 |        305 |
+| components\cashier                                                                               |          2 |        295 |         14 |         39 |        348 |
+| components\dashboard                                                                             |          1 |         51 |          0 |          4 |         55 |
+| components\database                                                                              |          3 |        277 |         11 |         40 |        328 |
+| components\debug                                                                                 |          1 |        606 |         29 |         65 |        700 |
+| components\kitchen                                                                               |          1 |        230 |         10 |         21 |        261 |
+| components\layout                                                                                |          6 |        452 |         22 |         54 |        528 |
+| components\menu                                                                                  |          3 |        338 |          8 |         34 |        380 |
+| components\orders                                                                                |          1 |        426 |         29 |         43 |        498 |
+| components\tables                                                                                |          6 |        857 |         45 |        111 |      1,013 |
+| components\tables (Files)                                                                        |          2 |        508 |         31 |         69 |        608 |
+| components\tables\order                                                                          |          1 |        234 |         14 |         23 |        271 |
+| components\tables\table-info                                                                     |          1 |         34 |          0 |          7 |         41 |
+| components\tables\table-status                                                                   |          2 |         81 |          0 |         12 |         93 |
+| components\ui                                                                                    |         63 |      4,742 |         30 |        569 |      5,341 |
+| components\ui (Files)                                                                            |         52 |      4,357 |         24 |        506 |      4,887 |
+| components\ui\chart                                                                              |         11 |        385 |          6 |         63 |        454 |
+| context                                                                                          |          1 |         43 |          3 |         14 |         60 |
+| hooks                                                                                            |         15 |      3,721 |        361 |        647 |      4,729 |
+| integrations                                                                                     |          4 |        672 |         55 |        122 |        849 |
+| integrations\supabase                                                                            |          4 |        672 |         55 |        122 |        849 |
+| lib                                                                                              |          2 |         70 |         30 |         18 |        118 |
+| pages                                                                                            |         15 |      4,636 |        175 |        363 |      5,174 |
+| scripts                                                                                          |          1 |         40 |         32 |         16 |         88 |
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| filename                                                                                         | language       | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| d:\proyectos\proyectos\plate-perfect-order\src\App.css                                           | CSS            |         37 |          0 |          6 |         43 |
+| d:\proyectos\proyectos\plate-perfect-order\src\App.tsx                                           | TypeScript JSX |        111 |          4 |          8 |        123 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\DiagnosticoTablas.tsx                  | TypeScript JSX |        259 |         15 |         31 |        305 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\cashier\BillDetails.tsx                | TypeScript JSX |        117 |          3 |         14 |        134 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\cashier\ProcessPayment.tsx             | TypeScript JSX |        178 |         11 |         25 |        214 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\dashboard\StatCard.tsx                 | TypeScript JSX |         51 |          0 |          4 |         55 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\database\AddCurrencyColumn.tsx         | TypeScript JSX |         87 |          1 |         13 |        101 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\database\DatabaseErrorHandler.tsx      | TypeScript JSX |         41 |          5 |          8 |         54 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\database\DatabaseInitializer.tsx       | TypeScript JSX |        149 |          5 |         19 |        173 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\debug\SettingsDebug.tsx                | TypeScript JSX |        606 |         29 |         65 |        700 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\kitchen\OrderList.tsx                  | TypeScript JSX |        230 |         10 |         21 |        261 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\Header.tsx                      | TypeScript JSX |         58 |          0 |          8 |         66 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\Layout.tsx                      | TypeScript JSX |         41 |          0 |          3 |         44 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\MainLayout.tsx                  | TypeScript JSX |         59 |          6 |         11 |         76 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\MainNav.tsx                     | TypeScript JSX |         24 |          1 |          1 |         26 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\ProtectedRoute.tsx              | TypeScript JSX |         60 |          7 |         13 |         80 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\layout\Sidebar.tsx                     | TypeScript JSX |        210 |          8 |         18 |        236 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\menu\MenuCard.tsx                      | TypeScript JSX |        135 |          6 |         14 |        155 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\menu\NewMenuCategory.tsx               | TypeScript JSX |         95 |          2 |          8 |        105 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\menu\ShareMenuButton.tsx               | TypeScript JSX |        108 |          0 |         12 |        120 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\orders\CreateOrderForm.tsx             | TypeScript JSX |        426 |         29 |         43 |        498 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\TableDetails.tsx                | TypeScript JSX |        283 |         11 |         33 |        327 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\TableMap.tsx                    | TypeScript JSX |        225 |         20 |         36 |        281 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\order\OrderDialog.tsx           | TypeScript JSX |        234 |         14 |         23 |        271 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\table-info\TableInfo.tsx        | TypeScript JSX |         34 |          0 |          7 |         41 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\table-status\StatusBadge.tsx    | TypeScript JSX |         36 |          0 |          6 |         42 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\tables\table-status\StatusSelector.tsx | TypeScript JSX |         45 |          0 |          6 |         51 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\accordion.tsx                       | TypeScript JSX |         49 |          0 |          8 |         57 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\alert-dialog.tsx                    | TypeScript JSX |        126 |          0 |         14 |        140 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\alert.tsx                           | TypeScript JSX |         53 |          0 |          7 |         60 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\aspect-ratio.tsx                    | TypeScript JSX |          3 |          0 |          3 |          6 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\avatar.tsx                          | TypeScript JSX |         43 |          0 |          6 |         49 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\badge.tsx                           | TypeScript JSX |         31 |          0 |          6 |         37 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\breadcrumb.tsx                      | TypeScript JSX |        105 |          0 |         11 |        116 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\button.tsx                          | TypeScript JSX |         51 |          0 |          6 |         57 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\calendar.tsx                        | TypeScript JSX |         60 |          0 |          5 |         65 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\card.tsx                            | TypeScript JSX |         71 |          0 |          9 |         80 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\carousel.tsx                        | TypeScript JSX |        231 |          0 |         30 |        261 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\area-chart.tsx                | TypeScript JSX |          5 |          0 |          3 |          8 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\bar-chart.tsx                 | TypeScript JSX |          5 |          0 |          3 |          8 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\chart-container.tsx           | TypeScript JSX |         38 |          1 |          5 |         44 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\chart-context.tsx             | TypeScript JSX |         14 |          0 |          8 |         22 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\chart-legend.tsx              | TypeScript JSX |         60 |          0 |          7 |         67 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\chart-style.tsx               | TypeScript JSX |         40 |          2 |          7 |         49 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\chart-tooltip.tsx             | TypeScript JSX |        150 |          0 |         13 |        163 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\index.tsx                     | TypeScript JSX |         23 |          0 |          3 |         26 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\line-chart.tsx                | TypeScript JSX |          5 |          0 |          3 |          8 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\types.ts                      | TypeScript     |         11 |          2 |          4 |         17 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\chart\utils.ts                      | TypeScript     |         34 |          1 |          7 |         42 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\checkbox.tsx                        | TypeScript JSX |         25 |          0 |          4 |         29 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\collapsible.tsx                     | TypeScript JSX |          5 |          0 |          5 |         10 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\command.tsx                         | TypeScript JSX |        136 |          0 |         18 |        154 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\context-menu.tsx                    | TypeScript JSX |        181 |          0 |         18 |        199 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\currency-selector.tsx               | TypeScript JSX |        197 |          3 |          8 |        208 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\date-range-picker.tsx               | TypeScript JSX |         65 |          0 |          2 |         67 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\dialog.tsx                          | TypeScript JSX |        108 |          0 |         13 |        121 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\drawer.tsx                          | TypeScript JSX |        104 |          0 |         13 |        117 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\dropdown-menu.tsx                   | TypeScript JSX |        181 |          0 |         18 |        199 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\form.tsx                            | TypeScript JSX |        152 |          0 |         25 |        177 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\formatted-price.tsx                 | TypeScript JSX |         23 |          0 |          4 |         27 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\hover-card.tsx                      | TypeScript JSX |         22 |          0 |          6 |         28 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\image-upload.tsx                    | TypeScript JSX |        128 |          9 |         15 |        152 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\input-otp.tsx                       | TypeScript JSX |         62 |          0 |          8 |         70 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\input.tsx                           | TypeScript JSX |         19 |          0 |          4 |         23 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\label.tsx                           | TypeScript JSX |         20 |          0 |          5 |         25 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\menubar.tsx                         | TypeScript JSX |        216 |          0 |         19 |        235 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\navigation-menu.tsx                 | TypeScript JSX |        117 |          0 |         12 |        129 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\pagination.tsx                      | TypeScript JSX |        107 |          0 |         11 |        118 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\popover.tsx                         | TypeScript JSX |         24 |          0 |          6 |         30 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\progress.tsx                        | TypeScript JSX |         23 |          0 |          4 |         27 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\radio-group.tsx                     | TypeScript JSX |         38 |          0 |          5 |         43 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\resizable.tsx                       | TypeScript JSX |         38 |          0 |          6 |         44 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\scroll-area.tsx                     | TypeScript JSX |         42 |          0 |          5 |         47 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\select.tsx                          | TypeScript JSX |        145 |          0 |         14 |        159 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\separator.tsx                       | TypeScript JSX |         26 |          0 |          4 |         30 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\sheet.tsx                           | TypeScript JSX |        116 |          0 |         16 |        132 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\sidebar.tsx                         | TypeScript JSX |        696 |         12 |         54 |        762 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\skeleton.tsx                        | TypeScript JSX |         13 |          0 |          3 |         16 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\slider.tsx                          | TypeScript JSX |         23 |          0 |          4 |         27 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\sonner.tsx                          | TypeScript JSX |         25 |          0 |          5 |         30 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\switch.tsx                          | TypeScript JSX |         24 |          0 |          4 |         28 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\table.tsx                           | TypeScript JSX |        107 |          0 |         11 |        118 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\tabs.tsx                            | TypeScript JSX |         47 |          0 |          7 |         54 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\textarea.tsx                        | TypeScript JSX |         20 |          0 |          5 |         25 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\toast.tsx                           | TypeScript JSX |        115 |          0 |         13 |        128 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\toaster.tsx                         | TypeScript JSX |         31 |          0 |          3 |         34 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\toggle-group.tsx                    | TypeScript JSX |         51 |          0 |          9 |         60 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\toggle.tsx                          | TypeScript JSX |         38 |          0 |          6 |         44 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\tooltip.tsx                         | TypeScript JSX |         22 |          0 |          7 |         29 |
+| d:\proyectos\proyectos\plate-perfect-order\src\components\ui\use-toast.ts                        | TypeScript     |          2 |          0 |          2 |          4 |
+| d:\proyectos\proyectos\plate-perfect-order\src\context\ThemeContext.tsx                          | TypeScript JSX |         43 |          3 |         14 |         60 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\test-user-id.tsx                            | TypeScript JSX |         28 |          0 |          4 |         32 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-auth.tsx                                | TypeScript JSX |        317 |         33 |         44 |        394 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-currency.tsx                            | TypeScript JSX |         53 |          1 |         12 |         66 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-dashboard.tsx                           | TypeScript JSX |        181 |         20 |         39 |        240 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-menu.tsx                                | TypeScript JSX |        491 |         30 |         69 |        590 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-mobile.tsx                              | TypeScript JSX |         15 |          0 |          5 |         20 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-orders.tsx                              | TypeScript JSX |        538 |         54 |        102 |        694 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-public-menu.tsx                         | TypeScript JSX |         74 |          5 |         14 |         93 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-reports.tsx                             | TypeScript JSX |        198 |         16 |         39 |        253 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-reservations.tsx                        | TypeScript JSX |        261 |         26 |         49 |        336 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-settings.tsx                            | TypeScript JSX |        434 |         52 |         57 |        543 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-sound.tsx                               | TypeScript JSX |         46 |          6 |         11 |         63 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-staff.tsx                               | TypeScript JSX |        585 |         81 |        111 |        777 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-tables.tsx                              | TypeScript JSX |        341 |         35 |         60 |        436 |
+| d:\proyectos\proyectos\plate-perfect-order\src\hooks\use-toast.ts                                | TypeScript     |        159 |          2 |         31 |        192 |
+| d:\proyectos\proyectos\plate-perfect-order\src\index.css                                         | CSS            |         62 |          0 |         15 |         77 |
+| d:\proyectos\proyectos\plate-perfect-order\src\instrucciones_finales.md                          | Markdown       |          3 |          0 |          0 |          3 |
+| d:\proyectos\proyectos\plate-perfect-order\src\integrations\supabase\client.ts                   | TypeScript     |          5 |          3 |          3 |         11 |
+| d:\proyectos\proyectos\plate-perfect-order\src\integrations\supabase\create-tables.ts            | TypeScript     |        130 |         14 |         30 |        174 |
+| d:\proyectos\proyectos\plate-perfect-order\src\integrations\supabase\setup.ts                    | TypeScript     |        534 |         38 |         89 |        661 |
+| d:\proyectos\proyectos\plate-perfect-order\src\integrations\supabase\types.ts                    | TypeScript     |          3 |          0 |          0 |          3 |
+| d:\proyectos\proyectos\plate-perfect-order\src\lib\roles.ts                                      | TypeScript     |         65 |         30 |         16 |        111 |
+| d:\proyectos\proyectos\plate-perfect-order\src\lib\utils.ts                                      | TypeScript     |          5 |          0 |          2 |          7 |
+| d:\proyectos\proyectos\plate-perfect-order\src\main.tsx                                          | TypeScript JSX |          4 |          0 |          2 |          6 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Admin.tsx                                   | TypeScript JSX |        267 |          8 |         14 |        289 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Auth.tsx                                    | TypeScript JSX |        155 |          1 |         10 |        166 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Cashier.tsx                                 | TypeScript JSX |        322 |         33 |         32 |        387 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Dashboard.tsx                               | TypeScript JSX |        277 |          5 |         18 |        300 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Diagnostico.tsx                             | TypeScript JSX |         27 |          0 |          2 |         29 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Index.tsx                                   | TypeScript JSX |         99 |          2 |         11 |        112 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Kitchen.tsx                                 | TypeScript JSX |        283 |         23 |         32 |        338 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Menu.tsx                                    | TypeScript JSX |        663 |         14 |         37 |        714 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\NotFound.tsx                                | TypeScript JSX |         23 |          0 |          5 |         28 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Orders.tsx                                  | TypeScript JSX |        316 |          8 |         17 |        341 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\PublicMenu.tsx                              | TypeScript JSX |        213 |         15 |         19 |        247 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Reports.tsx                                 | TypeScript JSX |        322 |          5 |         19 |        346 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Settings.tsx                                | TypeScript JSX |        481 |         16 |         52 |        549 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Staff.tsx                                   | TypeScript JSX |        592 |         16 |         29 |        637 |
+| d:\proyectos\proyectos\plate-perfect-order\src\pages\Tables.tsx                                  | TypeScript JSX |        596 |         29 |         66 |        691 |
+| d:\proyectos\proyectos\plate-perfect-order\src\scripts\fix-tables-rls.ts                         | TypeScript     |         40 |         32 |         16 |         88 |
+| d:\proyectos\proyectos\plate-perfect-order\src\vite-env.d.ts                                     | TypeScript     |          0 |          1 |          1 |          2 |
+| Total                                                                                            |                |     17,932 |        874 |      2,223 |     21,029 |
++--------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
