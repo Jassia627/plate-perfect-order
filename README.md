@@ -1,22 +1,20 @@
-# Welcome to your Lovable project
+# Plate Perfect Order
 
-## Project info
+## Información del proyecto
 
-**URL**: https://lovable.dev/projects/bcf2525a-21bd-45fe-97ae-cd484d9031d9
+Plate Perfect Order es un sistema de gestión para restaurantes que permite administrar mesas, menús y pedidos.
 
-## How can I edit this code?
+## ¿Cómo editar este código?
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Editar localmente**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bcf2525a-21bd-45fe-97ae-cd484d9031d9) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+Clona este repositorio y trabaja con tu IDE preferido para realizar cambios en el código.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -60,14 +58,6 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Cómo desplegar este proyecto
 
-Simply open [Lovable](https://lovable.dev/projects/bcf2525a-21bd-45fe-97ae-cd484d9031d9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Puedes desplegar este proyecto en cualquier plataforma que soporte aplicaciones React/Vite, como Vercel, Netlify o GitHub Pages.
