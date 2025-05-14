@@ -212,42 +212,67 @@ const Sidebar = ({ onClose }: SidebarProps) => {
         </nav>
       </div>
 
-      <div className="p-4 border-t flex items-center justify-between">
-        <div className="flex items-center overflow-hidden">
-          <div className="w-8 h-8 flex-shrink-0 rounded-full bg-restaurant-primary flex items-center justify-center text-white font-medium">
-            {user?.email?.substring(0, 1).toUpperCase() || 'A'}
-          </div>
-          {!collapsed && (
-            <div className="ml-3 overflow-hidden">
-              <p className="text-sm font-medium dark:text-white truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@plateperfect.com'}</p>
-              {userRole && (
-                <p className="text-xs font-medium text-restaurant-primary">{getRoleDisplayName(rawUserRole)}</p>
-              )}
+      {/* Sección de perfil y cerrar sesión */}
+      <div className="p-4 border-t">
+        {/* En móvil, mostrar un diseño más compacto */}
+        {isMobile ? (
+          <div className="flex flex-col space-y-3">
+            {/* Información de usuario */}
+            <div className="flex items-center overflow-hidden">
+              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-restaurant-primary flex items-center justify-center text-white font-medium">
+                {user?.email?.substring(0, 1).toUpperCase() || 'A'}
+              </div>
+              <div className="ml-3 overflow-hidden flex-1">
+                <p className="text-sm font-medium dark:text-white truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@plateperfect.com'}</p>
+                {userRole && (
+                  <p className="text-xs font-medium text-restaurant-primary">{getRoleDisplayName(rawUserRole)}</p>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-        
-        <div className="flex flex-shrink-0 ml-2">
-          {/* En móvil, mostrar ambos botones siempre */}
-          {isMobile ? (
-            <>
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-1">
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            
+            {/* Botones en diseño móvil */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleTheme} 
+                className="w-full justify-center"
+              >
+                {theme === 'dark' ? <Sun size={16} className="mr-2" /> : <Moon size={16} className="mr-2" />}
+                <span>{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
               </Button>
               <Button 
-                variant="ghost" 
-                size="icon" 
+                variant="outline" 
+                size="sm" 
                 onClick={handleSignOut} 
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 relative"
+                className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
                 aria-label="Cerrar sesión"
-                title="Cerrar sesión"
               >
-                <LogOut size={18} />
+                <LogOut size={16} className="mr-2" />
+                <span>Salir</span>
               </Button>
-            </>
-          ) : (
-            <>
+            </div>
+          </div>
+        ) : (
+          // Diseño para escritorio
+          <div className="flex items-center justify-between">
+            <div className="flex items-center overflow-hidden">
+              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-restaurant-primary flex items-center justify-center text-white font-medium">
+                {user?.email?.substring(0, 1).toUpperCase() || 'A'}
+              </div>
+              {!collapsed && (
+                <div className="ml-3 overflow-hidden">
+                  <p className="text-sm font-medium dark:text-white truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@plateperfect.com'}</p>
+                  {userRole && (
+                    <p className="text-xs font-medium text-restaurant-primary">{getRoleDisplayName(rawUserRole)}</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-shrink-0 ml-2">
               {!collapsed && (
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-1">
                   {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -263,9 +288,9 @@ const Sidebar = ({ onClose }: SidebarProps) => {
               >
                 <LogOut size={18} />
               </Button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
