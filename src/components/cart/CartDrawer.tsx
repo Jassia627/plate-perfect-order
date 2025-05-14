@@ -180,45 +180,46 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
-        <SheetHeader className="p-4 border-b sticky top-0 bg-white z-10">
-          <SheetTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Tu Pedido
-          </SheetTitle>
-          <SheetDescription>
-            {totalItems === 0 
-              ? 'Tu carrito está vacío' 
-              : (
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="mr-2">
-                    {totalItems} {totalItems === 1 ? 'producto' : 'productos'}
-                  </Badge>
-                  <span className="font-medium">{formatPrice(totalPrice)}</span>
-                </div>
-              )
-            }
-          </SheetDescription>
-        </SheetHeader>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="px-4 pt-2 sticky top-[73px] bg-white z-10 w-full">
-            <TabsTrigger value="items" className="flex-1 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              <span>Productos</span>
-              {totalItems > 0 && (
-                <Badge variant="secondary" className="ml-auto">
-                  {totalItems}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="delivery" className="flex-1 flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              <span>Envío</span>
-            </TabsTrigger>
-          </TabsList>
+      <SheetContent className="flex flex-col w-full sm:max-w-md p-0" style={{ height: '100dvh' }}>
+        <div className="flex flex-col h-full overflow-y-auto">
+          <SheetHeader className="p-4 border-b sticky top-0 bg-white z-10">
+            <SheetTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Tu Pedido
+            </SheetTitle>
+            <SheetDescription>
+              {totalItems === 0 
+                ? 'Tu carrito está vacío' 
+                : (
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="mr-2">
+                      {totalItems} {totalItems === 1 ? 'producto' : 'productos'}
+                    </Badge>
+                    <span className="font-medium">{formatPrice(totalPrice)}</span>
+                  </div>
+                )
+              }
+            </SheetDescription>
+          </SheetHeader>
           
-          <TabsContent value="items" className="flex-1 overflow-auto p-4 pt-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-grow min-h-0">
+            <TabsList className="px-4 pt-2 w-full border-b sticky top-[73px] bg-white z-10">
+              <TabsTrigger value="items" className="flex-1 flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                <span>Productos</span>
+                {totalItems > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {totalItems}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="delivery" className="flex-1 flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                <span>Envío</span>
+              </TabsTrigger>
+            </TabsList>
+          
+          <TabsContent value="items" className="p-4 pt-2 overflow-auto">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center p-6 h-full">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
@@ -261,7 +262,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
             )}
           </TabsContent>
           
-          <TabsContent value="delivery" className="flex-1 overflow-auto p-4 pt-2">
+          <TabsContent value="delivery" className="p-4 pt-2 overflow-auto">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center p-6 h-full">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -359,7 +360,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                   />
                 </div>
                 
-                <div className="sticky bottom-0 pt-4 pb-4 mt-6 bg-background">
+                <div className="mt-6">
                   <div className="bg-muted p-3 rounded-md mb-4">
                     <div className="flex justify-between items-center font-medium">
                       <span>Total:</span>
@@ -383,6 +384,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </SheetContent>
     </Sheet>
   );
