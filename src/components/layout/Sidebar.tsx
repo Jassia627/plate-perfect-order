@@ -85,12 +85,7 @@ const sidebarItems: SidebarItem[] = [
     icon: Settings,
     roles: ["admin"]
   },
-  {
-    title: "Diagnóstico",
-    path: "/diagnostico",
-    icon: Bug,
-    roles: ["admin"]
-  },
+ 
 ];
 
 const Sidebar = ({ onClose }: SidebarProps) => {
@@ -100,8 +95,24 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   
-  // Determinar si estamos en móvil
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // Estado para controlar si estamos en móvil
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detectar si estamos en móvil al cargar y en cambios de tamaño de pantalla
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Comprobar al inicio
+    checkMobile();
+    
+    // Agregar listener para cambios de tamaño
+    window.addEventListener('resize', checkMobile);
+    
+    // Limpiar listener
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Recuperar el estado colapsado del sidebar desde localStorage
   useEffect(() => {
@@ -202,14 +213,14 @@ const Sidebar = ({ onClose }: SidebarProps) => {
       </div>
 
       <div className="p-4 border-t flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-restaurant-primary flex items-center justify-center text-white font-medium">
+        <div className="flex items-center overflow-hidden">
+          <div className="w-8 h-8 flex-shrink-0 rounded-full bg-restaurant-primary flex items-center justify-center text-white font-medium">
             {user?.email?.substring(0, 1).toUpperCase() || 'A'}
           </div>
           {!collapsed && (
-            <div className="ml-3">
-              <p className="text-sm font-medium dark:text-white">{user?.email?.split('@')[0] || 'Admin'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || 'admin@plateperfect.com'}</p>
+            <div className="ml-3 overflow-hidden">
+              <p className="text-sm font-medium dark:text-white truncate">{user?.email?.split('@')[0] || 'Admin'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@plateperfect.com'}</p>
               {userRole && (
                 <p className="text-xs font-medium text-restaurant-primary">{getRoleDisplayName(rawUserRole)}</p>
               )}
@@ -217,15 +228,43 @@ const Sidebar = ({ onClose }: SidebarProps) => {
           )}
         </div>
         
-        <div className="flex">
-          {!collapsed && (
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-1">
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </Button>
+        <div className="flex flex-shrink-0 ml-2">
+          {/* En móvil, mostrar ambos botones siempre */}
+          {isMobile ? (
+            <>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-1">
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleSignOut} 
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 relative"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut size={18} />
+              </Button>
+            </>
+          ) : (
+            <>
+              {!collapsed && (
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-1">
+                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleSignOut} 
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut size={18} />
+              </Button>
+            </>
           )}
-          <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-            <LogOut size={18} />
-          </Button>
         </div>
       </div>
     </div>
