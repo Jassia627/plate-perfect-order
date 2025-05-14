@@ -3,7 +3,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, BarChart, LineChart } from "@/components/ui/chart";
-import * as RechartsPrimitive from "recharts";
+import { Area, Bar, CartesianGrid, Legend, LabelList, Line, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowTrendingUpIcon, CreditCardIcon, CurrencyDollarIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -184,24 +184,50 @@ const Dashboard = () => {
                   width={chartDimensions.weekly.width}
                   height={chartDimensions.weekly.height}
                   margin={{ 
-                    top: 10, 
+                    top: 20, 
                     right: isMobile ? 10 : 30, 
-                    left: isMobile ? 0 : 0, 
-                    bottom: 0 
+                    left: isMobile ? 0 : 20, 
+                    bottom: 10 
                   }}
                 >
-                  <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                  <RechartsPrimitive.XAxis 
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
                     dataKey="name" 
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
-                    tickFormatter={isMobile ? (value) => value.substring(0, 3) : undefined}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                   />
-                  <RechartsPrimitive.YAxis 
+                  <YAxis 
                     width={isMobile ? 35 : 40}
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickFormatter={(value) => `$${value.toLocaleString()}`}
                   />
-                  <RechartsPrimitive.Tooltip formatter={(value: any) => [`$${value.toLocaleString()}`, 'Ventas']} />
-                  <RechartsPrimitive.Area type="monotone" dataKey="total" stroke="#E07A5F" fill="#E07A5F" fillOpacity={0.3} />
+                  <Tooltip 
+                    formatter={(value: any) => [`$${value.toLocaleString()}`, 'Ventas']}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top"
+                    height={36}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="total" 
+                    name="Ventas totales"
+                    stroke="#E07A5F" 
+                    fill="#E07A5F"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                    dot={{ fill: '#E07A5F', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#E07A5F', stroke: '#fff', strokeWidth: 2 }}
+                  />
                 </AreaChart>
               </div>
             )}
@@ -225,24 +251,53 @@ const Dashboard = () => {
                   width={chartDimensions.dishes.width}
                   height={chartDimensions.dishes.height}
                   margin={{ 
-                    top: 5, 
+                    top: 20, 
                     right: isMobile ? 10 : 30, 
                     left: isMobile ? 0 : 20, 
-                    bottom: 5 
+                    bottom: 10 
                   }}
                 >
-                  <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                  <RechartsPrimitive.XAxis 
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
                     dataKey="name" 
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                     tickFormatter={isMobile ? (value) => value.length > 8 ? `${value.substring(0, 7)}...` : value : undefined}
                   />
-                  <RechartsPrimitive.YAxis 
+                  <YAxis 
                     width={isMobile ? 30 : 40}
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                   />
-                  <RechartsPrimitive.Tooltip formatter={(value: any) => [`${value} unidades`, 'Ventas']} />
-                  <RechartsPrimitive.Bar dataKey="total" fill="#81B29A" />
+                  <Tooltip 
+                    formatter={(value: any) => [`${value} unidades`, 'Ventas']}
+                    cursor={{ fill: 'rgba(129, 178, 154, 0.1)' }}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top"
+                    height={36}
+                  />
+                  <Bar 
+                    dataKey="total" 
+                    name="Unidades vendidas"
+                    fill="#81B29A"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={60}
+                  >
+                    <LabelList 
+                      dataKey="total" 
+                      position="top" 
+                      style={{ fontSize: '11px', fill: '#6B7280' }}
+                    />
+                  </Bar>
                 </BarChart>
               </div>
             )}
@@ -268,24 +323,55 @@ const Dashboard = () => {
                   width={chartDimensions.hourly.width}
                   height={chartDimensions.hourly.height}
                   margin={{ 
-                    top: 5, 
+                    top: 20, 
                     right: isMobile ? 10 : 30, 
                     left: isMobile ? 0 : 20, 
-                    bottom: 5 
+                    bottom: 10 
                   }}
                 >
-                  <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                  <RechartsPrimitive.XAxis 
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
                     dataKey="hour" 
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                     tickFormatter={isMobile ? (value) => value.includes(':') ? value.split(':')[0] : value : undefined}
                   />
-                  <RechartsPrimitive.YAxis 
+                  <YAxis 
                     width={isMobile ? 30 : 40}
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: '#6B7280' }}
+                    tickLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                   />
-                  <RechartsPrimitive.Tooltip formatter={(value: any) => [`${value} clientes`, 'Clientes']} />
-                  <RechartsPrimitive.Line type="monotone" dataKey="customers" stroke="#3D405B" strokeWidth={2} />
+                  <Tooltip 
+                    formatter={(value: any) => [`${value} clientes`, 'Clientes']}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top"
+                    height={36}
+                  />
+                  <Area 
+                    type="monotone"
+                    dataKey="customers"
+                    stroke="none"
+                    fill="#3D405B"
+                    fillOpacity={0.1}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="customers" 
+                    name="Clientes por hora"
+                    stroke="#3D405B" 
+                    strokeWidth={2}
+                    dot={{ fill: '#3D405B', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#3D405B', stroke: '#fff', strokeWidth: 2 }}
+                  />
                 </LineChart>
               </div>
             )}

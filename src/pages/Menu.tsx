@@ -456,7 +456,7 @@ const Menu = () => {
 
       {/* Modal para editar categoría */}
       <Dialog open={isEditCategoryOpen} onOpenChange={setIsEditCategoryOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Categoría</DialogTitle>
             <DialogDescription>
@@ -522,13 +522,13 @@ const Menu = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal para añadir producto */}
+      {/* Modal para agregar producto */}
       <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Añadir Producto</DialogTitle>
+            <DialogTitle>Agregar Producto</DialogTitle>
             <DialogDescription>
-              Crea un nuevo producto para tu menú
+              Completa los detalles del nuevo producto
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -607,7 +607,7 @@ const Menu = () => {
 
       {/* Modal para editar producto */}
       <Dialog open={isEditItemOpen} onOpenChange={setIsEditItemOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
             <DialogDescription>

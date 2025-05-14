@@ -15,28 +15,39 @@ const Cashier = () => {
   const { tables, loading: tablesLoading, refreshTables } = useTables();
   const { orders, loading: ordersLoading, refreshOrders, getOrdersByTable, updateOrderStatus } = useOrders();
   const [pendingBills, setPendingBills] = useState<{table: Table, orders: Order[]}[]>([]);
-  const [completedBills, setCompletedBills] = useState<{table: Table, orders: Order[]}[]>([]);
+  const [completedBills, setCompletedBills] = useState<{table: Table, orders: Order[], completedAt?: string}[]>([]);
   const [selectedBill, setSelectedBill] = useState<{table: Table, orders: Order[]} | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Rastrear IDs de las órdenes pagadas que no tienen estado "completed" en la BD
-  const [paidOrderIds, setPaidOrderIds] = useState<Set<string>>(new Set());
 
-  // Cargar las mesas con cuentas pendientes
+  // Cargar las cuentas pendientes y completadas
   useEffect(() => {
-    const loadPendingBills = async () => {
+    const loadBills = async () => {
       setLoading(true);
       try {
-        // Solo procesar cuando se tienen tanto órdenes como mesas cargadas
         if (tablesLoading || ordersLoading) return;
         
         const billsData: {table: Table, orders: Order[]}[] = [];
-        const completedData: {table: Table, orders: Order[]}[] = [];
+        const completedData: {table: Table, orders: Order[], completedAt: string}[] = [];
         
-        // Agrupar todos los pedidos por mesa para evitar múltiples consultas
+        // Obtener todas las órdenes con sus estados de pago
+        const { data: payments, error: paymentsError } = await supabase
+          .from('payments')
+          .select('*')
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Últimas 24 horas
+        
+        if (paymentsError) {
+          console.error("Error al cargar pagos:", paymentsError);
+          return;
+        }
+
+        // Crear un mapa de órdenes pagadas
+        const paidOrderIds = new Set(payments?.flatMap(payment => 
+          payment.order_ids || []
+        ) || []);
+        
+        // Agrupar órdenes por mesa
         const ordersByTable: Record<string, Order[]> = {};
-        
-        // Agrupar todas las órdenes existentes por mesa
         orders.forEach(order => {
           if (!ordersByTable[order.table_id]) {
             ordersByTable[order.table_id] = [];
@@ -44,62 +55,51 @@ const Cashier = () => {
           ordersByTable[order.table_id].push(order);
         });
         
-        // Procesar solo mesas ocupadas
+        // Procesar mesas ocupadas
         const occupiedTables = tables.filter(table => table.status === "occupied");
         
-        // Para cada mesa ocupada, verificar si tiene pedidos con estado "delivered" o en paidOrderIds
         for (const table of occupiedTables) {
           const tableOrders = ordersByTable[table.id] || [];
           
-          // Pedidos entregados (para cobrar) - solo los que no están en paidOrderIds
+          // Pedidos entregados (para cobrar) - solo los que no están pagados
           const deliveredOrders = tableOrders.filter(
             order => order.status === "delivered" && !paidOrderIds.has(order.id)
           );
           if (deliveredOrders.length > 0) {
             billsData.push({ table, orders: deliveredOrders });
           }
-          
-          // Pedidos pagados (según nuestro registro local)
-          const paidOrders = tableOrders.filter(
-            order => paidOrderIds.has(order.id)
-          );
-          if (paidOrders.length > 0) {
-            completedData.push({ table, orders: paidOrders });
+        }
+        
+        // Procesar pagos completados
+        if (payments) {
+          for (const payment of payments) {
+            const orderIds = payment.order_ids || [];
+            const paymentOrders = orders.filter(order => orderIds.includes(order.id));
+            if (paymentOrders.length > 0) {
+              const table = tables.find(t => t.id === paymentOrders[0].table_id);
+              if (table) {
+                completedData.push({ 
+                  table, 
+                  orders: paymentOrders,
+                  completedAt: payment.created_at
+                });
+              }
+            }
           }
         }
         
         setPendingBills(billsData);
         setCompletedBills(completedData);
       } catch (error) {
-        console.error("Error al cargar cuentas pendientes:", error);
-        toast.error("Error al cargar cuentas pendientes");
+        console.error("Error al cargar cuentas:", error);
+        toast.error("Error al cargar cuentas");
       } finally {
         setLoading(false);
       }
     };
 
-    loadPendingBills();
-  }, [tables, orders, tablesLoading, ordersLoading, paidOrderIds]);
-
-  // Cargar paidOrderIds desde localStorage al inicio
-  useEffect(() => {
-    const savedPaidOrderIds = localStorage.getItem('paidOrderIds');
-    if (savedPaidOrderIds) {
-      try {
-        const parsedIds = JSON.parse(savedPaidOrderIds);
-        setPaidOrderIds(new Set(parsedIds));
-      } catch (error) {
-        console.error("Error al cargar paidOrderIds desde localStorage:", error);
-      }
-    }
-  }, []);
-
-  // Guardar paidOrderIds en localStorage cuando cambie
-  useEffect(() => {
-    if (paidOrderIds.size > 0) {
-      localStorage.setItem('paidOrderIds', JSON.stringify(Array.from(paidOrderIds)));
-    }
-  }, [paidOrderIds]);
+    loadBills();
+  }, [tables, orders, tablesLoading, ordersLoading]);
 
   // Manejar selección de cuenta
   const handleSelectBill = (bill: {table: Table, orders: Order[]}) => {
@@ -121,42 +121,25 @@ const Cashier = () => {
     
     setLoading(true);
     try {
-      // Guardar una copia local de la cuenta seleccionada
       const billToProcess = { ...selectedBill };
+      const orderIds = billToProcess.orders.map(order => order.id);
+      const total = billToProcess.orders.reduce((sum, order) => sum + order.total, 0);
       
-      // Para la base de datos - no cambiamos el estado de las órdenes
-      // Las órdenes ya están en estado "delivered" cuando llegan a caja
+      // Registrar el pago en la base de datos
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert([{
+          order_ids: orderIds,
+          payment_method: paymentMethod.split('|')[0],
+          total_amount: total,
+          tip_amount: parseFloat(paymentMethod.split('|')[1]) || 0,
+          received_amount: parseFloat(paymentMethod.split('|')[2]) || total,
+          change_amount: parseFloat(paymentMethod.split('|')[3]) || 0
+        }]);
       
-      // Registrar los IDs de las órdenes como pagadas en nuestro estado local
-      const newPaidOrderIds = new Set(paidOrderIds);
-      billToProcess.orders.forEach(order => {
-        newPaidOrderIds.add(order.id);
-      });
-      setPaidOrderIds(newPaidOrderIds);
-      
-      // Actualizar listas en la UI
-      // 1. Eliminar de pendientes
-      setPendingBills(prev => prev.filter(bill => bill.table.id !== billToProcess.table.id));
-      
-      // 2. Agregar a completados
-      setCompletedBills(prev => {
-        // Verificar si ya existe una entrada para esta mesa
-        const existingIndex = prev.findIndex(bill => bill.table.id === billToProcess.table.id);
-        
-        if (existingIndex >= 0) {
-          // Si existe, actualizar las órdenes
-          const updatedBills = [...prev];
-          // Combinar las órdenes existentes con las nuevas
-          updatedBills[existingIndex] = {
-            ...updatedBills[existingIndex],
-            orders: [...updatedBills[existingIndex].orders, ...billToProcess.orders]
-          };
-          return updatedBills;
-        } else {
-          // Si no existe, añadir nuevo elemento
-          return [...prev, billToProcess];
-        }
-      });
+      if (paymentError) {
+        throw new Error("Error al registrar el pago");
+      }
       
       // Actualizar el estado de la mesa a disponible
       const { error: tableError } = await supabase
@@ -179,12 +162,18 @@ const Cashier = () => {
       await refreshOrders();
       await refreshTables();
       
+      // Actualizar UI
+      setPendingBills(prev => prev.filter(bill => bill.table.id !== billToProcess.table.id));
+      setCompletedBills(prev => [...prev, {
+        ...billToProcess,
+        completedAt: new Date().toISOString()
+      }]);
+      
       toast.success("Pago procesado correctamente");
     } catch (error) {
       console.error("Error al procesar el pago:", error);
       toast.error("Error al procesar el pago");
     } finally {
-      // Siempre limpiar el estado al finalizar
       setIsProcessingPayment(false);
       setSelectedBill(null);
       setLoading(false);
@@ -303,9 +292,7 @@ const Cashier = () => {
                               onClick: () => {
                                 // Limpiar cuentas completadas
                                 setCompletedBills([]);
-                                // Limpiar también paidOrderIds
-                                setPaidOrderIds(new Set());
-                                localStorage.removeItem('paidOrderIds');
+                                // No es necesario limpiar localStorage ya que ahora usamos la base de datos
                                 toast.success("Se han limpiado todas las cuentas completadas");
                               }
                             },
