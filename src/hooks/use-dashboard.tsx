@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTables } from './use-tables';
+import { useAuth } from './use-auth';
 
 // Tipos para las estadísticas del dashboard
 export type WeeklySales = {
@@ -38,6 +39,7 @@ export type DashboardStats = {
 
 export function useDashboard(): DashboardStats {
   const { tables } = useTables();
+  const { user } = useAuth(); // Obtener el usuario autenticado
   const [loading, setLoading] = useState(true);
   const [currentSales, setCurrentSales] = useState(0);
   const [customersToday, setCustomersToday] = useState(0);
@@ -76,6 +78,12 @@ export function useDashboard(): DashboardStats {
   // Obtener datos de ventas y clientes
   const fetchDashboardData = async () => {
     try {
+      if (!user) {
+        console.error('No hay usuario autenticado');
+        setLoading(false);
+        return;
+      }
+      
       setLoading(true);
 
       // Obtener ventas del día actual
@@ -83,10 +91,11 @@ export function useDashboard(): DashboardStats {
       todayStartDate.setHours(0, 0, 0, 0);
       const todayISOString = todayStartDate.toISOString();
 
-      // Obtener órdenes del día actual
+      // Obtener órdenes del día actual filtradas por el usuario autenticado
       const { data: todayOrders, error: ordersError } = await supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id) // Filtrar por el usuario autenticado
         .gte('created_at', todayISOString);
 
       if (ordersError) {
@@ -111,6 +120,7 @@ export function useDashboard(): DashboardStats {
       const { data: weekOrders, error: weekOrdersError } = await supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id) // Filtrar por el usuario autenticado
         .gte('created_at', weekISOString);
 
       if (weekOrdersError) {
@@ -144,10 +154,23 @@ export function useDashboard(): DashboardStats {
       }
 
       // Obtener platos más vendidos
-      const { data: orderItemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*, menu_items(name)')
-        .gte('created_at', weekISOString);
+      // Primero obtenemos los IDs de las órdenes del usuario para filtrar los items
+      const orderIds = weekOrders ? weekOrders.map(order => order.id) : [];
+      
+      // Si no hay órdenes, no hay items que buscar
+      let orderItemsData = [];
+      let itemsError = null;
+      
+      if (orderIds.length > 0) {
+        const response = await supabase
+          .from('order_items')
+          .select('*, menu_items(name)')
+          .in('order_id', orderIds) // Filtrar por las órdenes del usuario autenticado
+          .gte('created_at', weekISOString);
+          
+        orderItemsData = response.data;
+        itemsError = response.error;
+      }
 
       if (itemsError) {
         console.error('Error al obtener productos vendidos:', itemsError);
@@ -171,35 +194,102 @@ export function useDashboard(): DashboardStats {
         ]);
       }
 
-      // Generar datos de clientes por hora (simulado por ahora)
+      // Generar datos de clientes por hora basados en órdenes reales
       const hours = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
-      const simulatedCustomers = hours.map(hour => {
-        // Distribución realista: más clientes durante horas pico
-        let baseCustomers = 15;
-        const hourNum = parseInt(hour.split(':')[0]);
-        
-        if (hourNum >= 13 && hourNum <= 15) { // Almuerzo
-          baseCustomers = 30;
-        } else if (hourNum >= 19 && hourNum <= 21) { // Cena
-          baseCustomers = 40;
-        }
-        
-        // Añadir algo de aleatoriedad
-        const customers = Math.floor(baseCustomers + (Math.random() * 10) - 5);
-        
-        return {
-          hour,
-          customers: Math.max(0, customers)
-        };
+      const hourlyData: { [key: string]: number } = {};
+      
+      // Inicializar todas las horas con 0 clientes
+      hours.forEach(hour => {
+        hourlyData[hour] = 0;
       });
+      
+      // Si hay datos de órdenes, contar clientes por hora
+      if (weekOrders && weekOrders.length > 0) {
+        weekOrders.forEach(order => {
+          const orderDate = new Date(order.created_at);
+          const orderHour = orderDate.getHours();
+          const hourKey = `${orderHour}:00`;
+          
+          // Solo contar si la hora está en nuestro rango definido
+          if (hours.includes(hourKey)) {
+            hourlyData[hourKey] = (hourlyData[hourKey] || 0) + 1;
+          }
+        });
+      }
+      
+      // Formatear los datos para el gráfico
+      const realHourlyCustomers = hours.map(hour => ({
+        hour,
+        customers: hourlyData[hour] || 0
+      }));
 
-      setHourlyCustomers(simulatedCustomers);
+      setHourlyCustomers(realHourlyCustomers);
 
-      // Calcular porcentajes de cambio (simulado por ahora)
+      // Calcular porcentajes de cambio basados en datos reales
+      // Obtener datos de la semana anterior para comparar
+      const twoWeeksAgoDate = new Date();
+      twoWeeksAgoDate.setDate(twoWeeksAgoDate.getDate() - 13); // 2 semanas atrás
+      const oneWeekAgoDate = new Date();
+      oneWeekAgoDate.setDate(oneWeekAgoDate.getDate() - 7); // 1 semana atrás
+      
+      const twoWeeksAgoISOString = twoWeeksAgoDate.toISOString();
+      const oneWeekAgoISOString = oneWeekAgoDate.toISOString();
+      
+      // Obtener órdenes de la semana anterior
+      const { data: previousWeekOrders, error: prevWeekError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user.id) // Filtrar por el usuario autenticado
+        .gte('created_at', twoWeeksAgoISOString)
+        .lt('created_at', oneWeekAgoISOString);
+      
+      if (prevWeekError) {
+        console.error('Error al obtener órdenes de la semana anterior:', prevWeekError);
+      }
+      
+      // Calcular ventas y clientes de la semana anterior
+      let prevWeekSales = 0;
+      let prevWeekCustomers = 0;
+      
+      if (previousWeekOrders && previousWeekOrders.length > 0) {
+        prevWeekSales = previousWeekOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+        prevWeekCustomers = previousWeekOrders.length;
+      }
+      
+      // Calcular ventas y clientes de la semana actual
+      let currentWeekSales = 0;
+      let currentWeekCustomers = 0;
+      
+      if (weekOrders && weekOrders.length > 0) {
+        currentWeekSales = weekOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+        currentWeekCustomers = weekOrders.length;
+      }
+      
+      // Calcular porcentajes de cambio
+      let salesChange = 0;
+      let customersChange = 0;
+      let averageChange = 0;
+      
+      if (prevWeekSales > 0) {
+        salesChange = Math.round(((currentWeekSales - prevWeekSales) / prevWeekSales) * 100);
+      }
+      
+      if (prevWeekCustomers > 0) {
+        customersChange = Math.round(((currentWeekCustomers - prevWeekCustomers) / prevWeekCustomers) * 100);
+      }
+      
+      // Calcular cambio en el ticket promedio
+      const prevAvgTicket = prevWeekCustomers > 0 ? prevWeekSales / prevWeekCustomers : 0;
+      const currentAvgTicket = currentWeekCustomers > 0 ? currentWeekSales / currentWeekCustomers : 0;
+      
+      if (prevAvgTicket > 0) {
+        averageChange = Math.round(((currentAvgTicket - prevAvgTicket) / prevAvgTicket) * 100);
+      }
+      
       const changeStats = {
-        sales: Math.floor(Math.random() * 20) - 5, // Entre -5% y +15%
-        customers: Math.floor(Math.random() * 25) - 5, // Entre -5% y +20%
-        average: Math.floor(Math.random() * 10) - 2, // Entre -2% y +8%
+        sales: salesChange,
+        customers: customersChange,
+        average: averageChange
       };
       
       setPercentageChange(changeStats);

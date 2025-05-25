@@ -1,0 +1,84 @@
+// CORRECCIONES PARA EL ARCHIVO use-orders.tsx
+
+// 1. CORRECCIÓN PARA LA FUNCIÓN getOrdersByTable
+// Busca la sección donde se aplican filtros según el rol del usuario en getOrdersByTable
+// y reemplázala con este código:
+
+// Aplicar filtros según el rol del usuario
+if (profileData) {
+  if (profileData.role === 'admin') {
+    // Los administradores ven TODOS los pedidos del sistema
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Admin viendo pedidos de mesa:', tableId);
+  } else if (profileData.role === 'cajero') {
+    // Los cajeros también ven TODOS los pedidos para poder cobrarlos
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Cajero viendo pedidos de mesa:', tableId);
+  } else if (profileData.role === 'cocina') {
+    // Los cocineros ven todos los pedidos para poder prepararlos
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Cocinero viendo pedidos de mesa:', tableId);
+  } else {
+    // Otros roles (meseros) ven sus propios pedidos y los de su admin
+    if (profileData.admin_id) {
+      query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${profileData.admin_id}`);
+    } else {
+      // Si no tienen admin_id, solo ven sus propios pedidos
+      query = query.eq('user_id', session.user.id);
+    }
+  }
+} else {
+  // Si no hay perfil, solo mostrar los pedidos del usuario actual
+  query = query.eq('user_id', session.user.id);
+}
+
+// 2. CORRECCIÓN PARA LA FUNCIÓN getOrderById
+// Busca la sección donde se aplican filtros según el rol del usuario en getOrderById
+// y reemplázala con este código:
+
+// Aplicar filtros según el rol del usuario
+if (profileData) {
+  if (profileData.role === 'admin') {
+    // Los administradores ven TODOS los pedidos del sistema
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Admin viendo pedido específico:', id);
+  } else if (profileData.role === 'cajero') {
+    // Los cajeros también ven TODOS los pedidos para poder cobrarlos
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Cajero viendo pedido específico:', id);
+  } else if (profileData.role === 'cocina') {
+    // Los cocineros ven todos los pedidos para poder prepararlos
+    // No aplicamos filtros para que puedan ver todo
+    console.log('Cocinero viendo pedido específico:', id);
+  } else {
+    // Otros roles (meseros) ven sus propios pedidos y los de su admin
+    if (profileData.admin_id) {
+      query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${profileData.admin_id}`);
+    } else {
+      // Si no tienen admin_id, solo ven sus propios pedidos
+      query = query.eq('user_id', session.user.id);
+    }
+  }
+} else {
+  // Si no hay perfil, solo mostrar los pedidos del usuario actual
+  query = query.eq('user_id', session.user.id);
+}
+
+// 3. CORRECCIÓN PARA LA FUNCIÓN createOrder
+// Busca la sección donde se determina el user_id y admin_id en createOrder
+// y reemplázala con este código:
+
+// Determinar user_id y admin_id para el pedido
+// Siempre asignamos el user_id al usuario autenticado actual
+let userId = session.user.id;
+let adminId = null; // Inicialmente no asignamos admin_id
+
+// Si el usuario tiene un admin_id asignado, lo guardamos como admin_id del pedido
+if (profileData.role !== 'admin' && profileData.admin_id) {
+  adminId = profileData.admin_id;
+} else {
+  // Si el usuario es admin, él mismo es el admin_id
+  adminId = session.user.id;
+}
+
+console.log('Creando pedido con user_id:', userId, 'y admin_id:', adminId);

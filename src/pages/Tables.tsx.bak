@@ -1,0 +1,857 @@
+import { useState, useEffect } from "react";
+import MainLayout from "@/components/layout/MainLayout";
+import TableMap from "@/components/tables/TableMap";
+import CanvasTableMap from "@/components/tables/CanvasTableMap";
+import TableDetails from "@/components/tables/TableDetails";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Calendar, Users, Loader2, Plus, Move, LayoutGrid, MapPin, Clock, Search, Filter, ChevronDown, MoreHorizontal, Settings, Edit } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useTables, Table, TableStatus, TableShape } from "@/hooks/use-tables";
+import { useReservations } from "@/hooks/use-reservations";
+import { format, addDays, isToday, isYesterday, isTomorrow } from "date-fns";
+import { es } from "date-fns/locale";
+import { DialogTitle, DialogDescription, DialogHeader, DialogFooter, DialogContent, Dialog } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { toast } from "sonner";
+import CreateOrderForm from "@/components/orders/CreateOrderForm";
+import { useOrders } from "@/hooks/use-orders";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+const TablesPage = () => {
+  // Usar los hooks para mesas y reservas
+  const { 
+    tables, 
+    loading: tablesLoading, 
+    error: tablesError,
+    addTable,
+    updateTable,
+    updateTableStatus,
+    refreshTables,
+    updateTablePosition,
+    diagnoseTableAccess
+  } = useTables();
+
+  const {
+    reservations,
+    loading: reservationsLoading,
+    getReservationsByDate,
+    addReservation
+  } = useReservations();
+
+  const { getOrdersByTable } = useOrders();
+
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [selectedTableForOrder, setSelectedTableForOrder] = useState<Table | null>(null);
+  const [tab, setTab] = useState("map");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isAddTableOpen, setIsAddTableOpen] = useState(false);
+  const [isAddReservationOpen, setIsAddReservationOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [newTableData, setNewTableData] = useState({
+    number: 1,
+    capacity: 2,
+    shape: "circle" as TableShape,
+    width: 60,
+    height: 60,
+    x: 100,
+    y: 100
+  });
+  const [newReservationData, setNewReservationData] = useState({
+    customerName: "",
+    people: 2,
+    date: format(new Date(), "yyyy-MM-dd"),
+    time: "19:00",
+    contact: "",
+    notes: "",
+    tableId: ""
+  });
+  const [tableOrders, setTableOrders] = useState([]);
+  const [occupiedTableAnimation, setOccupiedTableAnimation] = useState<string[]>([]);
+
+  // Calcular estadísticas
+  const totalTables = tables.length;
+  const availableTables = tables.filter(table => table.status === "available").length;
+  const occupiedTables = tables.filter(table => table.status === "occupied").length;
+  const reservedTables = tables.filter(table => table.status === "reserved").length;
+
+  // Cargar reservas cuando cambia la fecha seleccionada
+  useEffect(() => {
+    getReservationsByDate(selectedDate);
+  }, [selectedDate]);
+
+  const handleTableClick = (table: Table) => {
+    if (!editMode) {
+      setSelectedTable(table);
+      setNewReservationData(prev => ({ ...prev, tableId: table.id }));
+    }
+  };
+
+  const handleTableStatusChange = async (tableId: string, status: TableStatus) => {
+    try {
+      let serverInfo;
+      
+      // Si cambiamos a ocupado, solicitamos información del mesero
+      if (status === "occupied") {
+        serverInfo = { server: "Mesero Asignado" }; // Podríamos pedir esta información al usuario
+        
+        // Aplicar animación a la mesa que se ocupó manualmente
+        setOccupiedTableAnimation(prev => [...prev, tableId]);
+        
+        // Quitar la animación después de 3 segundos
+        setTimeout(() => {
+          setOccupiedTableAnimation(prev => prev.filter(id => id !== tableId));
+        }, 3000);
+      }
+      
+      await updateTableStatus(tableId, status, serverInfo);
+      
+      // Actualizar la mesa seleccionada si es necesario
+      if (selectedTable && selectedTable.id === tableId) {
+        const updatedTable = tables.find(t => t.id === tableId);
+        if (updatedTable) setSelectedTable(updatedTable);
+      }
+    } catch (error) {
+      console.error("Error al cambiar estado de mesa:", error);
+      toast.error("Error al cambiar estado de mesa");
+    }
+  };
+
+  const handleTableMove = async (id: string, x: number, y: number) => {
+    try {
+      console.log(`Moviendo mesa ${id} a posición (${x}, ${y})`);
+      
+      // Actualizar temporalmente la posición en la interfaz
+      const updatedTables = tables.map(table => 
+        table.id === id ? { ...table, x, y } : table
+      );
+      
+      // Llamar a la función de actualización
+      await updateTablePosition(id, x, y);
+      
+      // Opcional: Mostrar feedback visual
+      toast.success(`Mesa ${tables.find(t => t.id === id)?.number || id} reposicionada`);
+    } catch (error) {
+      console.error("Error al mover la mesa:", error);
+      toast.error("Error al actualizar la posición de la mesa");
+    }
+  };
+
+  const handleAddTable = async () => {
+    try {
+      // Verificar el número de mesa para asegurar que sea único
+      const existingTable = tables.find(t => t.number === newTableData.number);
+      if (existingTable) {
+        toast.error("Ya existe una mesa con este número");
+        return;
+      }
+
+      await addTable({
+        ...newTableData,
+        status: "available"
+      });
+      
+      setIsAddTableOpen(false);
+      
+      // Reiniciar el formulario
+      setNewTableData({
+        number: Math.max(...tables.map(t => t.number), 0) + 1,
+        capacity: 2,
+        shape: "circle" as TableShape,
+        width: 60,
+        height: 60,
+        x: 100,
+        y: 100
+      });
+      
+    } catch (error) {
+      console.error("Error al añadir mesa:", error);
+      toast.error("Error al añadir mesa");
+    }
+  };
+
+  const handleAddReservation = async () => {
+    try {
+      if (!newReservationData.tableId) {
+        toast.error("Selecciona una mesa para la reserva");
+        return;
+      }
+
+      if (!newReservationData.customerName) {
+        toast.error("Debes ingresar el nombre del cliente");
+        return;
+      }
+
+      await addReservation({
+        ...newReservationData,
+        status: "pending"
+      });
+      
+      setIsAddReservationOpen(false);
+      
+      // Reiniciar el formulario
+      setNewReservationData({
+        customerName: "",
+        people: 2,
+        date: format(new Date(), "yyyy-MM-dd"),
+        time: "19:00",
+        contact: "",
+        notes: "",
+        tableId: selectedTable ? selectedTable.id : ""
+      });
+      
+      // Refrescar las mesas para mostrar la nueva como reservada
+      refreshTables();
+      
+    } catch (error) {
+      console.error("Error al añadir reserva:", error);
+      toast.error("Error al añadir reserva");
+    }
+  };
+
+  useEffect(() => {
+    const checkTableOrders = async () => {
+      if (selectedTable) {
+        try {
+          const orders = await getOrdersByTable(selectedTable.id);
+          setTableOrders(orders);
+        } catch (error) {
+          console.error("Error al cargar pedidos de la mesa:", error);
+        }
+      }
+    };
+    
+    if (selectedTable) {
+      checkTableOrders();
+    }
+  }, [selectedTable, getOrdersByTable]);
+
+  // Manejar acciones en las mesas
+  const handleTableAction = (action: string, table: Table) => {
+    if (action === "reserve") {
+      if (table.status !== "available") {
+        toast.error("Solo puedes reservar mesas disponibles");
+        return;
+      }
+      
+      setNewReservationData(prev => ({
+        ...prev,
+        tableId: table.id,
+        date: selectedDate.toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+      }));
+      
+      setSelectedTable(table);
+      setIsAddReservationOpen(true);
+    } else if (action === "edit") {
+      // Implementa la lógica para editar una mesa
+    } else if (action === "orders") {
+      // Seleccionar la mesa para crear un pedido
+      setSelectedTableForOrder(table);
+    }
+  };
+
+  // Manejar toggle de modo edición
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+    if (editMode) {
+      toast.success("Modo edición desactivado");
+    } else {
+      toast.success("Modo edición activado - Ahora puedes arrastrar las mesas");
+    }
+  };
+
+  return (
+    <MainLayout 
+      title="Gestión de Mesas" 
+      subtitle="Administre las mesas y reservas de su restaurante"
+    >
+      {(tablesLoading || reservationsLoading) && (
+        <div className="flex items-center justify-center p-6 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-restaurant-primary" />
+          <span className="ml-2 font-medium">Cargando datos...</span>
+        </div>
+      )}
+
+      {tablesError && (
+        <Alert variant="destructive" className="mb-6 border-2 shadow-sm">
+          <AlertTitle className="flex items-center font-semibold">
+            <span className="mr-2">⚠️</span>
+            Error al cargar mesas
+          </AlertTitle>
+          <AlertDescription className="mt-2">{tablesError}</AlertDescription>
+          <Button 
+            variant="outline" 
+            className="mt-3 bg-white/80"
+            onClick={async () => {
+              // Intentar diagnosticar el error si hay mesas en la base de datos
+              const { data: anyTable, error } = await supabase
+                .from('tables')
+                .select('id')
+                .limit(1);
+                
+              if (error) {
+                toast.error(`Error al buscar mesas: ${error.message}`);
+                return;
+              }
+              
+              if (anyTable && anyTable.length > 0) {
+                const diagnostico = await diagnoseTableAccess(anyTable[0].id);
+                toast.info(`Diagnóstico: ${diagnostico.hasAccess ? 'Debería tener acceso' : 'No tiene acceso'} - ${diagnostico.reason}`);
+              } else {
+                toast.info("No se encontraron mesas para diagnosticar");
+              }
+              
+              // Intentar recargar
+              refreshTables();
+            }}
+          >
+            Diagnosticar y reintentar
+          </Button>
+        </Alert>
+      )}
+
+      {/* Estadísticas y acciones rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total mesas</p>
+                <h3 className="text-3xl font-bold mt-1">{totalTables}</h3>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-full">
+                <LayoutGrid className="h-6 w-6 text-gray-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Disponibles</p>
+                <h3 className="text-3xl font-bold mt-1 text-green-600">{availableTables}</h3>
+              </div>
+              <div className="p-3 bg-green-100 rounded-full">
+                <MapPin className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Ocupadas</p>
+                <h3 className="text-3xl font-bold mt-1 text-blue-600">{occupiedTables}</h3>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Reservadas</p>
+                <h3 className="text-3xl font-bold mt-1 text-amber-600">{reservedTables}</h3>
+              </div>
+              <div className="p-3 bg-amber-100 rounded-full">
+                <Clock className="h-6 w-6 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Barra de acciones */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar mesa o reserva..." 
+            className="pl-10 w-full sm:w-[300px] bg-white"
+          />
+        </div>
+        
+        <div className="flex space-x-3 w-full sm:w-auto justify-end">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={() => setIsAddTableOpen(true)} 
+                  variant="default"
+                  className="bg-restaurant-primary hover:bg-restaurant-primary/90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Añadir Mesa</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Añadir nueva mesa</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={() => setIsAddReservationOpen(true)} 
+                  variant="outline"
+                  className="border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary/10"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Nueva Reserva</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Crear nueva reserva</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleEditMode}>
+                <Edit className="h-4 w-4 mr-2" />
+                {editMode ? "Desactivar modo edición" : "Activar modo edición"}
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="h-4 w-4 mr-2" />
+                Configuración de mesas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-8">
+          <Tabs 
+            value={tab} 
+            onValueChange={setTab} 
+            className="bg-white rounded-lg shadow-sm overflow-hidden"
+          >
+            <TabsList className="w-full p-0 bg-muted/20 rounded-none border-b">
+              <TabsTrigger 
+                value="map"
+                className="flex-1 py-3 rounded-none data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-restaurant-primary transition-all"
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Mapa de Mesas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reservations"
+                className="flex-1 py-3 rounded-none data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-restaurant-primary transition-all"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Reservas
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="map" className="p-0 m-0">
+              {editMode && (
+                <div className="bg-amber-50 border-b border-amber-200 p-3 flex justify-between items-center">
+                  <div className="flex items-center">
+                    <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+                      Modo Edición
+                    </Badge>
+                    <span className="ml-2 text-sm text-amber-800">
+                      Puedes arrastrar las mesas para reposicionarlas
+                    </span>
+                  </div>
+                  <Switch 
+                    checked={editMode}
+                    onCheckedChange={toggleEditMode}
+                    className="data-[state=checked]:bg-amber-600"
+                  />
+                </div>
+              )}
+              
+              <CanvasTableMap 
+                tables={tables} 
+                onTableClick={handleTableClick}
+                onTableMove={handleTableMove}
+                onTableAdd={addTable}
+                onTableDelete={(id) => {
+                  // Implementar lógica para eliminar mesa
+                  toast.info(`Función para eliminar mesa ${id} no implementada aún`);
+                }}
+                editMode={editMode}
+                occupiedTableIds={occupiedTableAnimation}
+              />
+            </TabsContent>
+            
+            <TabsContent value="reservations" className="p-0 m-0">
+              <div className="p-4 border-b flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                  <h3 className="text-lg font-medium flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-restaurant-primary" />
+                    Reservas
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Gestione las reservas del restaurante
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-white p-1 rounded-md border shadow-sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => setSelectedDate(new Date())}
+                  >
+                    Hoy
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => setSelectedDate(addDays(new Date(), 1))}
+                  >
+                    Mañana
+                  </Button>
+                  <div className="relative">
+                    <Calendar className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                    <input 
+                      type="date" 
+                      className="pl-9 pr-3 py-1 border rounded-md text-sm" 
+                      value={format(selectedDate, "yyyy-MM-dd")}
+                      onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="mb-4 flex justify-between items-center">
+                  <h4 className="font-medium text-sm text-muted-foreground">
+                    {isToday(selectedDate) 
+                      ? "Reservas de hoy" 
+                      : isTomorrow(selectedDate) 
+                        ? "Reservas de mañana" 
+                        : isYesterday(selectedDate) 
+                          ? "Reservas de ayer" 
+                          : `Reservas del ${format(selectedDate, "dd/MM/yyyy")}`
+                    }
+                  </h4>
+                  <Badge variant="outline" className="bg-muted/20">
+                    {reservations.length} {reservations.length === 1 ? 'reserva' : 'reservas'}
+                  </Badge>
+                </div>
+                
+                {reservations.length === 0 ? (
+                  <div className="bg-muted/10 p-8 text-center rounded-lg border border-dashed border-muted">
+                    <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">No hay reservas para esta fecha</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Selecciona otra fecha o agrega una nueva reserva
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {reservations.map(reservation => (
+                    <div 
+                      key={reservation.id} 
+                      className="p-3 hover:bg-accent/10 rounded-md cursor-pointer flex justify-between items-center"
+                      onClick={() => {
+                        const tableForReservation = tables.find(t => t.id === reservation.tableId);
+                        if (tableForReservation) {
+                          setSelectedTable(tableForReservation);
+                          setTab("map");
+                        }
+                      }}
+                    >
+                      <div>
+                        <div className="font-medium">{reservation.customerName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Mesa {tables.find(t => t.id === reservation.tableId)?.number || '?'} • {reservation.people} personas
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">{reservation.time}</div>
+                        <div className="text-xs">
+                          <span className={`px-2 py-0.5 rounded-full ${
+                            reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            reservation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            reservation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {reservation.status === 'confirmed' ? 'Confirmada' :
+                             reservation.status === 'pending' ? 'Pendiente' :
+                             reservation.status === 'cancelled' ? 'Cancelada' : 'Completada'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Panel lateral con detalles */}
+        <div className="col-span-12 lg:col-span-4">
+          <TableDetails 
+            table={selectedTable} 
+            onStatusChange={handleTableStatusChange}
+            onAction={handleTableAction}
+            reservations={reservations.filter(r => 
+              selectedTable && r.tableId === selectedTable.id &&
+              r.status !== 'cancelled'
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Modal para añadir mesa */}
+      <Dialog open={isAddTableOpen} onOpenChange={setIsAddTableOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir Nueva Mesa</DialogTitle>
+            <DialogDescription>
+              Complete la información para añadir una nueva mesa al restaurante.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tableNumber">Número de mesa</Label>
+                <Input 
+                  id="tableNumber" 
+                  type="number" 
+                  value={newTableData.number}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, number: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="capacity">Capacidad</Label>
+                <Input 
+                  id="capacity" 
+                  type="number" 
+                  value={newTableData.capacity}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, capacity: parseInt(e.target.value) }))}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="shape">Forma</Label>
+              <Select 
+                value={newTableData.shape} 
+                onValueChange={(value: TableShape) => setNewTableData(prev => ({ ...prev, shape: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una forma" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="circle">Redonda</SelectItem>
+                  <SelectItem value="square">Cuadrada</SelectItem>
+                  <SelectItem value="rectangle">Rectangular</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="width">Ancho (px)</Label>
+                <Input 
+                  id="width" 
+                  type="number" 
+                  value={newTableData.width}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, width: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="height">Alto (px)</Label>
+                <Input 
+                  id="height" 
+                  type="number" 
+                  value={newTableData.height}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, height: parseInt(e.target.value) }))}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="xPosition">Posición X</Label>
+                <Input 
+                  id="xPosition" 
+                  type="number" 
+                  value={newTableData.x}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, x: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yPosition">Posición Y</Label>
+                <Input 
+                  id="yPosition" 
+                  type="number" 
+                  value={newTableData.y}
+                  onChange={(e) => setNewTableData(prev => ({ ...prev, y: parseInt(e.target.value) }))}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddTableOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddTable}>Guardar Mesa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para añadir reserva */}
+      <Dialog open={isAddReservationOpen} onOpenChange={setIsAddReservationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nueva Reserva</DialogTitle>
+            <DialogDescription>
+              Complete la información para crear una nueva reserva.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Nombre del cliente</Label>
+              <Input 
+                id="customerName" 
+                value={newReservationData.customerName}
+                onChange={(e) => setNewReservationData(prev => ({ ...prev, customerName: e.target.value }))}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="people">Cantidad de personas</Label>
+                <Input 
+                  id="people" 
+                  type="number" 
+                  value={newReservationData.people}
+                  onChange={(e) => setNewReservationData(prev => ({ ...prev, people: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tableSelect">Mesa</Label>
+                <Select 
+                  value={newReservationData.tableId} 
+                  onValueChange={(value) => setNewReservationData(prev => ({ ...prev, tableId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una mesa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tables
+                      .filter(table => table.status === 'available')
+                      .map(table => (
+                        <SelectItem key={table.id} value={table.id}>
+                          Mesa {table.number} ({table.capacity} personas)
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Fecha</Label>
+                <Input 
+                  id="date" 
+                  type="date" 
+                  value={newReservationData.date}
+                  onChange={(e) => setNewReservationData(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time">Hora</Label>
+                <Input 
+                  id="time" 
+                  type="time" 
+                  value={newReservationData.time}
+                  onChange={(e) => setNewReservationData(prev => ({ ...prev, time: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="contact">Contacto</Label>
+              <Input 
+                id="contact" 
+                value={newReservationData.contact}
+                onChange={(e) => setNewReservationData(prev => ({ ...prev, contact: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas</Label>
+              <Input 
+                id="notes" 
+                value={newReservationData.notes}
+                onChange={(e) => setNewReservationData(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddReservationOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddReservation}>Crear Reserva</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {selectedTableForOrder && (
+        <CreateOrderForm
+          table={selectedTableForOrder}
+          isOpen={!!selectedTableForOrder}
+          onClose={() => setSelectedTableForOrder(null)}
+          onOrderCreated={() => {
+            // Refrescar las mesas para mostrar los cambios
+            refreshTables();
+            
+            // Añadir la mesa a la lista de animación de ocupado
+            setOccupiedTableAnimation(prev => [...prev, selectedTableForOrder.id]);
+            
+            // Quitar la animación después de 3 segundos
+            setTimeout(() => {
+              setOccupiedTableAnimation(prev => prev.filter(id => id !== selectedTableForOrder.id));
+            }, 3000);
+            
+            // Actualizar los pedidos de la mesa seleccionada si es necesaria
+            if (selectedTable?.id === selectedTableForOrder.id) {
+              getOrdersByTable(selectedTable.id).then(setTableOrders);
+            }
+          }}
+        />
+      )}
+    </MainLayout>
+  );
+};
+
+export default TablesPage;

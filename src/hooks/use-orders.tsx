@@ -159,12 +159,128 @@ export function useOrders(): UseOrdersReturn {
       
       console.log('Cargando órdenes para el usuario:', session.user.id, 'Rol:', profileData?.role);
       
-      // Consulta sin filtros adicionales, las políticas RLS se encargarán
-      // de mostrar los pedidos adecuados según el rol del usuario
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('orders').select('*');
+      
+      // SOLUCIÓN: Modificar la lógica para que todos los roles puedan ver todos los pedidos
+      // Esto soluciona el problema donde los pedidos no son visibles entre diferentes roles
+      
+      // Verificar si es un restaurante (identificado por restaurant_id)
+      // Si es un restaurante, todos los usuarios del mismo restaurante deben ver los mismos pedidos
+      if (profileData) {
+        console.log('Perfil de usuario:', profileData.role, 'Restaurant ID:', profileData.restaurant_id);
+        
+        // Si el usuario pertenece a un restaurante, mostrar todos los pedidos de ese restaurante
+        if (profileData.restaurant_id) {
+          // Obtener todos los usuarios que pertenecen al mismo restaurante
+          const { data: restaurantUsersData, error: restaurantUsersError } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('restaurant_id', profileData.restaurant_id);
+          
+          if (restaurantUsersError) {
+            console.error('Error al obtener usuarios del restaurante:', restaurantUsersError);
+            setError('Error al cargar órdenes. Por favor, intente nuevamente.');
+          }
+          
+          if (restaurantUsersData && restaurantUsersData.length > 0) {
+            // Incluir a todos los usuarios del restaurante
+            const userIds = restaurantUsersData.map(user => user.user_id);
+            
+            // Construir condición OR para incluir a todos los usuarios del restaurante
+            const orConditions = [];
+            userIds.forEach(id => orConditions.push(`user_id.eq.${id}`));
+            
+            // También incluir órdenes donde el restaurant_id coincide
+            orConditions.push(`restaurant_id.eq.${profileData.restaurant_id}`);
+            
+            query = query.or(orConditions.join(','));
+            console.log(`Mostrando pedidos de ${userIds.length} usuarios del mismo restaurante`);
+          } else {
+            // Si no hay otros usuarios, mostrar pedidos del restaurante
+            query = query.or(`user_id.eq.${session.user.id},restaurant_id.eq.${profileData.restaurant_id}`);
+            console.log('No hay otros usuarios, mostrando pedidos del restaurante');
+          }
+        } 
+        // Si el usuario es admin, mostrar todos los pedidos de sus empleados
+        else if (profileData.role === 'admin') {
+          // Obtener todos los usuarios que tienen a este admin como su admin_id
+          const { data: staffData, error: staffError } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('admin_id', session.user.id);
+          
+          if (staffError) {
+            console.error('Error al obtener personal del admin:', staffError);
+            setError('Error al cargar órdenes. Por favor, intente nuevamente.');
+          }
+          
+          if (staffData && staffData.length > 0) {
+            // Incluir al admin y a todo su personal
+            const staffIds = staffData.map(staff => staff.user_id);
+            const orConditions = [`user_id.eq.${session.user.id}`, `admin_id.eq.${session.user.id}`];
+            staffIds.forEach(id => orConditions.push(`user_id.eq.${id}`));
+            
+            query = query.or(orConditions.join(','));
+            console.log(`Admin: mostrando pedidos propios y de ${staffIds.length} miembros del personal`);
+          } else {
+            // Si no tiene personal, mostrar sus propios pedidos
+            query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${session.user.id}`);
+            console.log('Admin sin personal: mostrando solo pedidos propios');
+          }
+        }
+        // Si el usuario tiene un admin_id, mostrar pedidos de todos los que comparten ese admin_id
+        else if (profileData.admin_id) {
+          // Obtener todos los usuarios que tienen el mismo admin_id
+          const { data: colleaguesData, error: colleaguesError } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('admin_id', profileData.admin_id);
+          
+          if (colleaguesError) {
+            console.error('Error al obtener colegas:', colleaguesError);
+            setError('Error al cargar órdenes. Por favor, intente nuevamente.');
+          }
+          
+          // También obtener al admin
+          const { data: adminData } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('user_id', profileData.admin_id)
+            .single();
+          
+          if (colleaguesData && colleaguesData.length > 0) {
+            // Incluir al usuario, a sus colegas y al admin
+            const colleagueIds = colleaguesData.map(colleague => colleague.user_id);
+            const orConditions = [`user_id.eq.${session.user.id}`];
+            
+            // Añadir al admin
+            if (adminData) {
+              orConditions.push(`user_id.eq.${adminData.user_id}`);
+            }
+            
+            // Añadir a los colegas
+            colleagueIds.forEach(id => orConditions.push(`user_id.eq.${id}`));
+            
+            query = query.or(orConditions.join(','));
+            console.log(`Usuario con admin: mostrando pedidos propios, del admin y de ${colleagueIds.length} colegas`);
+          } else {
+            // Si no hay colegas, mostrar pedidos propios y del admin
+            query = query.or(`user_id.eq.${session.user.id},user_id.eq.${profileData.admin_id}`);
+            console.log('Usuario sin colegas: mostrando pedidos propios y del admin');
+          }
+        } else {
+          // Si no tiene restaurant_id ni admin_id, mostrar solo sus pedidos
+          query = query.eq('user_id', session.user.id);
+          console.log('Usuario sin restaurant_id ni admin_id: mostrando solo pedidos propios');
+        }
+      } else {
+        // Si no hay datos de perfil, mostrar solo pedidos propios
+        query = query.eq('user_id', session.user.id);
+        console.log('No hay datos de perfil: mostrando solo pedidos propios');
+      }
+      
+      // Ejecutar la consulta ordenada por fecha de creación
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error al cargar pedidos:', error);
@@ -240,12 +356,13 @@ export function useOrders(): UseOrdersReturn {
       }
       
       // Determinar user_id y admin_id para el pedido
+      // Siempre asignamos el user_id al usuario autenticado actual
       let userId = session.user.id;
       let adminId = session.user.id; // Por defecto, el usuario es su propio admin
       
+      // Si el usuario tiene un admin_id asignado, lo guardamos como referencia
+      // pero mantenemos el user_id como el usuario actual
       if (profileData.role !== 'admin' && profileData.admin_id) {
-        // Si es mesero, el pedido se asigna al administrador
-        userId = profileData.admin_id;
         adminId = profileData.admin_id;
       }
       
@@ -453,11 +570,47 @@ export function useOrders(): UseOrdersReturn {
         return [];
       }
       
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('table_id', tableId)
-        .order('created_at', { ascending: false });
+      // Verificar el rol del usuario
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role, admin_id')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error al verificar rol de usuario:', profileError);
+        return [];
+      }
+      
+      let query = supabase.from('orders').select('*').eq('table_id', tableId);
+      
+      // Aplicar filtros segu00fan el rol del usuario
+      if (profileData) {
+        if (profileData.role === 'admin') {
+          // Los administradores ven todos los pedidos relacionados con ellos
+          query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${session.user.id}`);
+        } else if (profileData.role === 'cocina') {
+          // Los cocineros ven todos los pedidos para poder prepararlos
+          if (profileData.admin_id) {
+            query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${profileData.admin_id}`);
+          } else {
+            query = query.eq('user_id', session.user.id);
+          }
+        } else {
+          // Otros roles (meseros, cajeros) ven sus propios pedidos y los de su admin
+          if (profileData.admin_id) {
+            query = query.or(`user_id.eq.${session.user.id},user_id.eq.${profileData.admin_id}`);
+          } else {
+            query = query.eq('user_id', session.user.id);
+          }
+        }
+      } else {
+        // Si no hay perfil, solo mostrar los pedidos del usuario actual
+        query = query.eq('user_id', session.user.id);
+      }
+      
+      // Ejecutar la consulta ordenada por fecha de creaciu00f3n
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error al cargar pedidos de la mesa:', error);
@@ -506,11 +659,47 @@ export function useOrders(): UseOrdersReturn {
         return null;
       }
       
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', id)
+      // Verificar el rol del usuario
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role, admin_id')
+        .eq('user_id', session.user.id)
         .single();
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error al verificar rol de usuario:', profileError);
+        return null;
+      }
+      
+      let query = supabase.from('orders').select('*').eq('id', id);
+      
+      // Aplicar filtros segu00fan el rol del usuario
+      if (profileData) {
+        if (profileData.role === 'admin') {
+          // Los administradores ven todos los pedidos relacionados con ellos
+          query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${session.user.id}`);
+        } else if (profileData.role === 'cocina') {
+          // Los cocineros ven todos los pedidos para poder prepararlos
+          if (profileData.admin_id) {
+            query = query.or(`user_id.eq.${session.user.id},admin_id.eq.${profileData.admin_id}`);
+          } else {
+            query = query.eq('user_id', session.user.id);
+          }
+        } else {
+          // Otros roles (meseros, cajeros) ven sus propios pedidos y los de su admin
+          if (profileData.admin_id) {
+            query = query.or(`user_id.eq.${session.user.id},user_id.eq.${profileData.admin_id}`);
+          } else {
+            query = query.eq('user_id', session.user.id);
+          }
+        }
+      } else {
+        // Si no hay perfil, solo mostrar los pedidos del usuario actual
+        query = query.eq('user_id', session.user.id);
+      }
+      
+      // Ejecutar la consulta
+      const { data, error } = await query.single();
       
       if (error) {
         console.error('Error al cargar pedido:', error);

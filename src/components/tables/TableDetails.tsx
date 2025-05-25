@@ -5,26 +5,53 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle,
-  CardDescription 
+  CardDescription
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableStatus } from "@/hooks/use-tables";
-import { Reservation } from "@/hooks/use-reservations";
-import { Calendar, Clock, Users, AlertTriangle, Receipt, CreditCard, CalendarClock, ClipboardList, Calculator } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Table as TableType, TableStatus } from "@/hooks/use-tables";
+import { useOrders } from "@/hooks/use-orders";
+import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
+import { Reservation } from "@/hooks/use-reservations";
+import { supabase } from "@/integrations/supabase/client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import OrderDialog from "./order/OrderDialog";
-import { useOrders } from "@/hooks/use-orders";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Calendar, 
+  Clock, 
+  Users, 
+  AlertTriangle, 
+  Receipt, 
+  CreditCard, 
+  CalendarClock, 
+  ClipboardList, 
+  Calculator 
+} from "lucide-react";
 
 type TableDetailsProps = {
-  table: Table | null;
+  table: TableType | null;
   onStatusChange: (tableId: string, status: TableStatus) => void;
   reservations?: Reservation[];
-  onAction?: (action: string, table: Table) => void;
+  onAction?: (action: string, table: TableType) => void;
 };
 
 const TableDetails = ({ table, onStatusChange, reservations = [], onAction }: TableDetailsProps) => {
@@ -89,13 +116,42 @@ const TableDetails = ({ table, onStatusChange, reservations = [], onAction }: Ta
         return;
       }
       
-      // Cambiar el estado de todos los pedidos a "delivered"
-      const updatePromises = tableOrders.map(order => 
-        updateOrderStatus(order.id, "delivered")
-      );
+      console.log('Generando cuenta para', tableOrders.length, 'pedidos');
+      
+      // Cambiar el estado de todos los pedidos a "ready" en lugar de "delivered"
+      // para que sean visibles en la pantalla del cajero
+      const updatePromises = tableOrders.map(order => {
+        console.log(`Cambiando estado del pedido ${order.id} a ready para cobro`);
+        return updateOrderStatus(order.id, "ready");
+      });
       
       // Esperar a que todas las actualizaciones se completen
       await Promise.all(updatePromises);
+      
+      // Actualizar directamente en la base de datos para asegurar la visibilidad
+      // Primero actualizamos las u00f3rdenes
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ status: 'ready' })
+        .in('id', tableOrders.map(order => order.id));
+      
+      if (updateError) {
+        console.error('Error al actualizar estado de pedidos:', updateError);
+      } else {
+        console.log('Pedidos actualizados correctamente en la base de datos');
+      }
+      
+      // Luego actualizamos los items de las u00f3rdenes
+      const { error: itemsUpdateError } = await supabase
+        .from('order_items')
+        .update({ status: 'ready' })
+        .in('order_id', tableOrders.map(order => order.id));
+      
+      if (itemsUpdateError) {
+        console.error('Error al actualizar items de pedidos:', itemsUpdateError);
+      } else {
+        console.log('Items de pedidos actualizados correctamente');
+      }
       
       setIsGeneratingBill(false);
       toast.success("Cuenta enviada al cajero correctamente");

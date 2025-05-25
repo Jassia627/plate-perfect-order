@@ -8,7 +8,7 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<{user: User | null, session: Session | null} | null>;
   signOut: () => Promise<void>;
   registerStaffMember: (email: string, password: string, name: string, role: string, phone: string) => Promise<boolean>;
   loading: boolean;
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string): Promise<{user: User | null, session: Session | null} | null> => {
     try {
       setLoading(true);
       setError(null);
@@ -92,11 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Error de registro:', error);
         setError(`Error: ${error.message}`);
+        return null;
       } else {
         console.log('Registro exitoso:', data);
         // Verificar si es necesario confirmar el correo electrónico
         if (data?.user?.identities?.length === 0) {
           setError('Este correo ya está registrado. Intenta iniciar sesión.');
+          return null;
         } else if (data?.user?.confirmed_at) {
           toast.success('Cuenta de administrador creada con éxito. Ahora puedes iniciar sesión.');
           setError('Registro exitoso. Ahora puedes iniciar sesión.');
@@ -104,10 +106,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast.info('Revisa tu correo para confirmar tu cuenta de administrador.');
           setError('Registro exitoso. Por favor, revisa tu correo para confirmar tu cuenta antes de iniciar sesión.');
         }
+        
+        // Devolver los datos del usuario creado
+        return {
+          user: data.user,
+          session: data.session
+        };
       }
     } catch (err) {
       console.error('Error completo:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido al registrarse');
+      return null;
     } finally {
       setLoading(false);
     }

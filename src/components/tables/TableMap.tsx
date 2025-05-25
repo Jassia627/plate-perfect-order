@@ -40,9 +40,9 @@ const TableItem = ({
   }, [table.x, table.y]);
 
   const statusClasses = {
-    available: "bg-green-100 border-green-500 hover:bg-green-200",
-    occupied: "bg-blue-100 border-blue-500 hover:bg-blue-200",
-    reserved: "bg-amber-100 border-amber-500 hover:bg-amber-200",
+    available: "bg-gradient-to-br from-green-50 to-green-100 border-green-500 hover:bg-green-200 shadow-sm",
+    occupied: "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-500 hover:bg-blue-200 shadow-md",
+    reserved: "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-500 hover:bg-amber-200 shadow-sm",
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
@@ -124,9 +124,20 @@ const TableItem = ({
       onClick={handleClick}
       onMouseDown={onMouseDown}
     >
-      <div className="text-center pointer-events-none">
-        <div className="font-semibold text-restaurant-dark">{table.number}</div>
-        <div className="text-xs text-muted-foreground">{table.capacity} pers.</div>
+      <div className="text-center pointer-events-none flex flex-col items-center justify-center w-full h-full">
+        <div className="font-bold text-restaurant-dark text-lg">{table.number}</div>
+        <div className="text-xs bg-white/40 dark:bg-black/10 px-2 py-0.5 rounded-full mt-1 text-muted-foreground flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-muted-foreground/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          {table.capacity}
+        </div>
+        {table.status === 'occupied' && (
+          <div className="absolute top-1 right-1 bg-blue-500 w-2 h-2 rounded-full animate-pulse" />
+        )}
+        {table.status === 'reserved' && (
+          <div className="absolute top-1 right-1 bg-amber-500 w-2 h-2 rounded-full" />
+        )}
       </div>
     </div>
   );
@@ -241,11 +252,14 @@ const TableMap = ({
       </div>
       
       <div 
+        className="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm" 
         ref={mapContainerRef}
-        className="relative border border-dashed border-gray-300 rounded-lg bg-gray-50 h-[600px] overflow-hidden"
       >
+        {/* Grid pattern background */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-10 dark:opacity-5"></div>
+        
         <div 
-          className="absolute inset-0 transition-transform origin-center"
+          className="relative w-full h-[600px] overflow-auto"
           style={{ transform: `scale(${scale})` }}
         >
           {/* Representamos las mesas */}

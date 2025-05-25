@@ -171,7 +171,7 @@ const Staff = () => {
         setIsCreateAccountDialogOpen(false);
         setAccountStaff(null);
         setAccountPassword("");
-        toast.success(`Cuenta creada para ${accountStaff.name} con acceso a ${systemRole}`);
+        toast.success("Registro exitoso");
       }
     } catch (error) {
       console.error("Error al crear cuenta:", error);
